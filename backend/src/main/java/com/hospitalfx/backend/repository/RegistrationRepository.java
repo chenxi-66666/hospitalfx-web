@@ -57,6 +57,20 @@ public class RegistrationRepository {
         return jdbcTemplate.query("SELECT * FROM tb_registinfo WHERE id = ?", ROW_MAPPER, id).stream().findFirst();
     }
 
+    public Optional<RegistrationRecord> findLatestByPatientUserId(Integer patientUserId) {
+        return jdbcTemplate.query(
+            """
+            SELECT *
+            FROM tb_registinfo
+            WHERE patient_user_id = ?
+            ORDER BY regist_date DESC, id DESC
+            LIMIT 1
+            """,
+            ROW_MAPPER,
+            patientUserId
+        ).stream().findFirst();
+    }
+
     public int nextId() {
         Integer next = jdbcTemplate.queryForObject("SELECT COALESCE(MAX(id), 0) + 1 FROM tb_registinfo", Integer.class);
         return next == null ? 1 : next;

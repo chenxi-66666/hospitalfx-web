@@ -1,6 +1,6 @@
 # 接口契约（Interface Contract）
 
-状态：**草案 v0.1** —— 由队友二确认或修改后转正，转正后字段不得单方面变更。
+状态：**v1.0 已确认** —— 字段已由队友二确认，转正后不得单方面变更。
 规则：任何字段调整必须先在群里说明，并同步更新本文件，再由队友二通过 PR 提交。
 
 本文件是**解冻钥匙**：契约定下来之后，Web、小程序、后端和 AI 可以同时开工，不需要等后端把全部代码写完。
@@ -86,8 +86,7 @@
 }
 ```
 
-> 待队友二定：搜索是用 `keyword` 查询参数（如上），还是独立的 `/api/medications/search`。
-> **二选一，定了就把另一种从本文件删掉**，不要两个都实现。
+> 已确认：统一使用 `GET /api/medications?keyword=...&page=...&size=...`，不实现独立 `/search`。
 
 ---
 
@@ -199,6 +198,8 @@ ai-service 不可用时应返回 503 且 `message` 可读，不要返回空白�
 
 ### POST /api/medication-plans
 
+`registrationId`、`medicationInventoryId` 为可选字段；小程序只传 `medicationName` 时，由后端自动匹配。
+
 请求：
 
 ```json
@@ -241,17 +242,15 @@ ai-service 不可用时应返回 503 且 `message` 可读，不要返回空白�
 
 ---
 
-## 7. 待队友二确认的 5 件事
+## 7. 已确认事项（v1.0）
 
-1. 搜索接口：`keyword` 查询参数 还是 独立 `/search` 路径？
+1. 搜索接口统一使用 `keyword` 查询参数，不实现独立 `/search` 路径。
 2. `indications` / `contraindications` / `sourceName` / `sourceUrl` / `versionLabel`
-   是否落在新建的 `tb_medication_knowledge` 表？（建议：是）
-3. 分页参数是否用 `page` / `size`？
-4. 错误响应是否统一带 `message` 中文字段？
-5. **（小程序新增）** 拍照识别确认后新建用药计划时，小程序只有药品名称，
-   拿不到 `registrationId` 和 `medicationInventoryId`。请二选一并写进本文件：
-   - 方案 A：后端在 `POST /api/medication-plans` 里按 `medicationName` 匹配库存与最近一次挂号，前端只传名称；
-   - 方案 B：新增一个只接收药品名称的接口（例如 `POST /api/medication-plans/from-recognition`）。
-   两个方案都可以，但**只能选一个**，不要两个都实现。
+   落在 `tb_medication_knowledge` 表。
+3. 分页参数统一使用 `page` / `size`。
+4. 错误响应统一包含中文 `message` 字段。
+5. 拍照识别确认后新建用药计划采用 **方案 A**：
+   `POST /api/medication-plans` 允许只传 `medicationName`，后端按名称匹配库存，并关联该患者最近一次挂号。
+   为兼容已有调用，`registrationId` 和 `medicationInventoryId` 仍可作为可选字段传入。
 
 确认后请把本文件状态改为 **v1.0 已确认**，并在群里通知队友一、队友二、队友三、你。

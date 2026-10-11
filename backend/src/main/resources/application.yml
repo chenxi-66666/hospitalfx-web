@@ -1,5 +1,7 @@
 server:
   port: ${PORT:8080}
+  error:
+    include-message: always
 
 spring:
   application:
@@ -15,8 +17,15 @@ spring:
       schema-locations: classpath:schema.sql
       data-locations: classpath:demo-data.sql
       encoding: UTF-8
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
   jackson:
     default-property-inclusion: non_null
+
+ai-service:
+  base-url: ${AI_SERVICE_BASE_URL:http://localhost:8090}
 
 deepseek:
   api-key: ${DEEPSEEK_API_KEY:}

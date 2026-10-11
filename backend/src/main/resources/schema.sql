@@ -112,6 +112,79 @@ CREATE TABLE IF NOT EXISTS tb_medication_inventory (
   UNIQUE KEY uk_medication_code (medication_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS tb_medication_knowledge (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  medication_inventory_id INT NOT NULL,
+  medication_code VARCHAR(32) NOT NULL,
+  medication_name VARCHAR(80) NOT NULL,
+  generic_name VARCHAR(80) DEFAULT NULL,
+  indications TEXT DEFAULT NULL,
+  contraindications TEXT DEFAULT NULL,
+  adverse_reactions TEXT DEFAULT NULL,
+  source_name VARCHAR(120) DEFAULT NULL,
+  source_url VARCHAR(500) DEFAULT NULL,
+  version_label VARCHAR(40) DEFAULT NULL,
+  review_status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_medication_knowledge_inventory (medication_inventory_id),
+  KEY idx_medication_knowledge_name (medication_name),
+  CONSTRAINT fk_medication_knowledge_inventory FOREIGN KEY (medication_inventory_id)
+    REFERENCES tb_medication_inventory(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS tb_medication_image_record (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  uploaded_by_user_id INT NOT NULL,
+  image_hash CHAR(64) NOT NULL,
+  original_filename VARCHAR(255) DEFAULT NULL,
+  content_type VARCHAR(100) DEFAULT NULL,
+  medicine_name VARCHAR(80) DEFAULT NULL,
+  specification VARCHAR(80) DEFAULT NULL,
+  manufacturer VARCHAR(120) DEFAULT NULL,
+  expiry_date VARCHAR(20) DEFAULT NULL,
+  confidence DECIMAL(5,4) DEFAULT NULL,
+  model_version VARCHAR(40) DEFAULT NULL,
+  warnings TEXT DEFAULT NULL,
+  confirmation_status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT NULL,
+  PRIMARY KEY (id),
+  KEY idx_medication_image_hash (image_hash),
+  KEY idx_medication_image_user (uploaded_by_user_id),
+  CONSTRAINT fk_medication_image_user FOREIGN KEY (uploaded_by_user_id)
+    REFERENCES tb_user(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS tb_ai_inference_record (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  model_type VARCHAR(40) NOT NULL,
+  input_summary VARCHAR(500) DEFAULT NULL,
+  output_summary VARCHAR(1000) DEFAULT NULL,
+  model_version VARCHAR(40) DEFAULT NULL,
+  confidence DECIMAL(5,4) DEFAULT NULL,
+  duration_ms INT DEFAULT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_ai_inference_type_created (model_type, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS tb_knowledge_document (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  title VARCHAR(200) NOT NULL,
+  content TEXT NOT NULL,
+  source_name VARCHAR(120) DEFAULT NULL,
+  source_url VARCHAR(500) DEFAULT NULL,
+  version_label VARCHAR(40) DEFAULT NULL,
+  review_status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT NULL,
+  PRIMARY KEY (id),
+  KEY idx_knowledge_document_title (title),
+  KEY idx_knowledge_document_updated (updated_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS tb_medication_conflict (
   id INT NOT NULL AUTO_INCREMENT,
   left_medication_name VARCHAR(80) NOT NULL,

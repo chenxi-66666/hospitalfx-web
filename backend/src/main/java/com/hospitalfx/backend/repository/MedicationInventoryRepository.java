@@ -38,6 +38,59 @@ public class MedicationInventoryRepository {
         return jdbcTemplate.query("SELECT * FROM tb_medication_inventory WHERE id = ?", ROW_MAPPER, id).stream().findFirst();
     }
 
+    public Optional<MedicationInventory> findFirstByName(String medicationName) {
+        return jdbcTemplate.query(
+            """
+            SELECT *
+            FROM tb_medication_inventory
+            WHERE LOWER(medication_name) = LOWER(?)
+            ORDER BY id
+            LIMIT 1
+            """,
+            ROW_MAPPER,
+            medicationName
+        ).stream().findFirst();
+    }
+
+    public List<MedicationInventory> search(String keyword, int limit, int offset) {
+        String normalized = keyword == null ? "" : keyword.trim();
+        return jdbcTemplate.query(
+            """
+            SELECT *
+            FROM tb_medication_inventory
+            WHERE ? = ''
+               OR LOWER(medication_name) LIKE CONCAT('%', LOWER(?), '%')
+               OR LOWER(medication_code) LIKE CONCAT('%', LOWER(?), '%')
+            ORDER BY id
+            LIMIT ? OFFSET ?
+            """,
+            ROW_MAPPER,
+            normalized,
+            normalized,
+            normalized,
+            limit,
+            offset
+        );
+    }
+
+    public long count(String keyword) {
+        String normalized = keyword == null ? "" : keyword.trim();
+        Long total = jdbcTemplate.queryForObject(
+            """
+            SELECT COUNT(*)
+            FROM tb_medication_inventory
+            WHERE ? = ''
+               OR LOWER(medication_name) LIKE CONCAT('%', LOWER(?), '%')
+               OR LOWER(medication_code) LIKE CONCAT('%', LOWER(?), '%')
+            """,
+            Long.class,
+            normalized,
+            normalized,
+            normalized
+        );
+        return total == null ? 0L : total;
+    }
+
     public void decreaseStock(Integer id, Integer quantity) {
         jdbcTemplate.update(
             """

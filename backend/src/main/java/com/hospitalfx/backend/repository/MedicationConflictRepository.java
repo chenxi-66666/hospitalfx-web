@@ -28,4 +28,25 @@ public class MedicationConflictRepository {
     public List<MedicationConflict> findAll() {
         return jdbcTemplate.query("SELECT * FROM tb_medication_conflict ORDER BY id", ROW_MAPPER);
     }
+
+    public List<MedicationConflict> findByMedicationNames(List<String> medicationNames) {
+        if (medicationNames == null || medicationNames.isEmpty()) {
+            return List.of();
+        }
+
+        String placeholders = String.join(", ", java.util.Collections.nCopies(medicationNames.size(), "?"));
+        String sql = """
+            SELECT *
+            FROM tb_medication_conflict
+            WHERE (left_medication_name IN (%s) AND right_medication_name IN (%s))
+               OR (right_medication_name IN (%s) AND left_medication_name IN (%s))
+            ORDER BY id
+            """.formatted(placeholders, placeholders, placeholders, placeholders);
+
+        java.util.List<Object> parameters = new java.util.ArrayList<>();
+        for (int index = 0; index < 4; index += 1) {
+            parameters.addAll(medicationNames);
+        }
+        return jdbcTemplate.query(sql, ROW_MAPPER, parameters.toArray());
+    }
 }

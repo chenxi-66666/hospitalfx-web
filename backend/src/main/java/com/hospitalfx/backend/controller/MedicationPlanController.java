@@ -1,6 +1,7 @@
 package com.hospitalfx.backend.controller;
 
 import com.hospitalfx.backend.dto.AppStateResponse;
+import com.hospitalfx.backend.dto.MedicationPlanCreateRequest;
 import com.hospitalfx.backend.model.MedicationCheckIn;
 import com.hospitalfx.backend.model.MedicationPlan;
 import com.hospitalfx.backend.model.UserAccount;
@@ -8,13 +9,21 @@ import com.hospitalfx.backend.repository.MedicationCheckInRepository;
 import com.hospitalfx.backend.repository.MedicationPlanRepository;
 import com.hospitalfx.backend.service.AppStateService;
 import com.hospitalfx.backend.service.AuthService;
+import com.hospitalfx.backend.service.MedicationPlanService;
+import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -26,19 +35,43 @@ public class MedicationPlanController {
 
     private final MedicationPlanRepository medicationPlanRepository;
     private final MedicationCheckInRepository medicationCheckInRepository;
+    private final MedicationPlanService medicationPlanService;
     private final AppStateService appStateService;
     private final AuthService authService;
 
     public MedicationPlanController(
         MedicationPlanRepository medicationPlanRepository,
         MedicationCheckInRepository medicationCheckInRepository,
+        MedicationPlanService medicationPlanService,
         AppStateService appStateService,
         AuthService authService
     ) {
         this.medicationPlanRepository = medicationPlanRepository;
         this.medicationCheckInRepository = medicationCheckInRepository;
+        this.medicationPlanService = medicationPlanService;
         this.appStateService = appStateService;
         this.authService = authService;
+    }
+
+    @GetMapping
+    public List<MedicationPlan> list(
+        @RequestHeader(value = "X-Auth-Token", required = false) String token,
+        @RequestParam(required = false) Integer patientUserId
+    ) {
+        UserAccount currentUser = authService.requireUser(token);
+        authService.requireAnyRole(currentUser, "ADMIN", "DOCTOR", "PHARMACIST", "PATIENT");
+        return medicationPlanService.listPlans(currentUser, patientUserId);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public MedicationPlan create(
+        @RequestHeader(value = "X-Auth-Token", required = false) String token,
+        @Valid @RequestBody MedicationPlanCreateRequest request
+    ) {
+        UserAccount currentUser = authService.requireUser(token);
+        authService.requireAnyRole(currentUser, "ADMIN", "DOCTOR", "PHARMACIST", "PATIENT");
+        return medicationPlanService.createPlan(currentUser, request);
     }
 
     @PutMapping("/{id}/check-in")

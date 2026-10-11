@@ -1,5 +1,9 @@
 -- Repeatable demo seed data for local development.
 SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE tb_ai_inference_record;
+TRUNCATE TABLE tb_medication_image_record;
+TRUNCATE TABLE tb_knowledge_document;
+TRUNCATE TABLE tb_medication_knowledge;
 TRUNCATE TABLE tb_medication_checkin;
 TRUNCATE TABLE tb_medication_plan;
 TRUNCATE TABLE tb_medication_conflict;
@@ -69,6 +73,44 @@ INSERT INTO tb_medication_inventory (
 (4, 'M004', '复方感冒灵颗粒', '10g*9袋', '盒', 17.50, 18, 8, '避免重复使用'),
 (5, 'M005', '阿司匹林肠溶片', '100mg*30片', '盒', 16.20, 14, 10, '胃溃疡患者慎用'),
 (6, 'M006', '奥美拉唑肠溶胶囊', '20mg*14粒', '盒', 25.60, 30, 8, '晨起空腹服用');
+
+-- 药品知识
+INSERT INTO tb_medication_knowledge (
+  id, medication_inventory_id, medication_code, medication_name, generic_name,
+  indications, contraindications, adverse_reactions,
+  source_name, source_url, version_label, review_status, created_at, updated_at
+) VALUES
+(1, 1, 'M001', '布洛芬缓释胶囊', '布洛芬', '用于缓解轻至中度疼痛，也用于普通感冒或流行性感冒引起的发热。', '对布洛芬或其他非甾体抗炎药过敏者禁用；活动性消化道溃疡患者禁用。', '可能出现恶心、胃痛、头晕或皮疹。', '国家药品监督管理局药品说明书', 'https://www.nmpa.gov.cn/', '2026-01', 'PENDING', '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
+(2, 2, 'M002', '阿莫西林胶囊', '阿莫西林', '用于敏感菌所致的呼吸道、泌尿道、皮肤软组织等感染。', '对青霉素类药物过敏者禁用。', '可能出现恶心、腹泻、皮疹等。', '国家药品监督管理局药品说明书', 'https://www.nmpa.gov.cn/', '2026-01', 'PENDING', '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
+(3, 3, 'M003', '氯雷他定片', '氯雷他定', '用于缓解过敏性鼻炎、荨麻疹等过敏症状。', '对本品成分过敏者禁用。', '可能出现头痛、嗜睡、口干等。', '国家药品监督管理局药品说明书', 'https://www.nmpa.gov.cn/', '2026-01', 'PENDING', '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
+(4, 4, 'M004', '复方感冒灵颗粒', '复方感冒灵', '用于感冒引起的头痛、发热、鼻塞、流涕、咽痛等症状。', '严重肝肾功能不全者禁用；服药期间不得饮酒。', '可能引起困倦、口干、胃部不适。', '国家药品监督管理局药品说明书', 'https://www.nmpa.gov.cn/', '2026-01', 'PENDING', '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
+(5, 5, 'M005', '阿司匹林肠溶片', '阿司匹林', '用于降低心肌梗死、脑卒中等心血管事件风险，也可用于解热镇痛。', '活动性溃疡、出血体质或对水杨酸类过敏者禁用。', '可能增加胃肠道刺激和出血风险。', '国家药品监督管理局药品说明书', 'https://www.nmpa.gov.cn/', '2026-01', 'PENDING', '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
+(6, 6, 'M006', '奥美拉唑肠溶胶囊', '奥美拉唑', '用于胃溃疡、十二指肠溃疡、反流性食管炎等酸相关疾病。', '对本品成分过敏者禁用。', '可能出现头痛、腹泻、恶心等。', '国家药品监督管理局药品说明书', 'https://www.nmpa.gov.cn/', '2026-01', 'PENDING', '2026-01-01 00:00:00', '2026-01-01 00:00:00');
+
+-- 知识库文档
+INSERT INTO tb_knowledge_document (
+  id, title, content, source_name, source_url, version_label, review_status, created_at, updated_at
+) VALUES
+(1, '阿莫西林胶囊说明书', '适用于敏感菌所致的呼吸道、泌尿道等感染；对青霉素过敏者禁用，用药前需确认过敏史。', '国家药品监督管理局', 'https://www.nmpa.gov.cn/', '2026-01', 'PENDING', '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
+(2, '布洛芬与阿司匹林同服的注意点', '两药同服可能增加胃肠道刺激与出血风险，建议在医生指导下调整用药方案。', '国家药品监督管理局', 'https://www.nmpa.gov.cn/', '2026-01', 'PENDING', '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
+(3, '服药依从性提示', '漏服后不要自行加倍补服，应按说明书或医嘱处理，并及时咨询药师。', NULL, NULL, NULL, 'PENDING', '2026-01-01 00:00:00', '2026-01-01 00:00:00');
+
+-- 图片识别与模型推理审计示例
+INSERT INTO tb_medication_image_record (
+  id, uploaded_by_user_id, image_hash, original_filename, content_type,
+  medicine_name, specification, manufacturer, expiry_date, confidence, model_version,
+  warnings, confirmation_status, created_at, updated_at
+) VALUES
+(1, 13, '7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069', 'demo-medicine.jpg', 'image/jpeg',
+ NULL, NULL, NULL, NULL, 0.0000, 'mock-0.1',
+ '["当前为联调占位结果，请接入真实识别模型。"]', 'PENDING', '2026-04-20 09:00:00', NULL);
+
+INSERT INTO tb_ai_inference_record (
+  id, model_type, input_summary, output_summary, model_version, confidence, duration_ms, created_at
+) VALUES
+(1, 'MEDICINE_IMAGE', 'imageHash=7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069',
+ '{"medicineName":null,"specification":null,"manufacturer":null,"expiryDate":null,"confidence":0.0,"modelVersion":"mock-0.1"}',
+ 'mock-0.1', 0.0000, 15, '2026-04-20 09:00:00');
 
 -- 药品冲突
 INSERT INTO tb_medication_conflict (

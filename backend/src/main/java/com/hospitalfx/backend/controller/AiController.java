@@ -4,18 +4,23 @@ import com.hospitalfx.backend.dto.AiResponse;
 import com.hospitalfx.backend.dto.AgentChatRequest;
 import com.hospitalfx.backend.dto.AgentChatResponse;
 import com.hospitalfx.backend.dto.DoctorMedicationAiRequest;
+import com.hospitalfx.backend.dto.MedicineImageResponse;
 import com.hospitalfx.backend.dto.PatientAiRequest;
 import com.hospitalfx.backend.dto.RegistrationAiRequest;
 import com.hospitalfx.backend.model.UserAccount;
 import com.hospitalfx.backend.repository.DoctorRepository;
 import com.hospitalfx.backend.service.AiService;
 import com.hospitalfx.backend.service.AuthService;
+import com.hospitalfx.backend.service.MedicineImageService;
 import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -24,11 +29,18 @@ public class AiController {
     private final AiService aiService;
     private final DoctorRepository doctorRepository;
     private final AuthService authService;
+    private final MedicineImageService medicineImageService;
 
-    public AiController(AiService aiService, DoctorRepository doctorRepository, AuthService authService) {
+    public AiController(
+        AiService aiService,
+        DoctorRepository doctorRepository,
+        AuthService authService,
+        MedicineImageService medicineImageService
+    ) {
         this.aiService = aiService;
         this.doctorRepository = doctorRepository;
         this.authService = authService;
+        this.medicineImageService = medicineImageService;
     }
 
     @PostMapping("/registration-advice")
@@ -82,6 +94,16 @@ public class AiController {
     ) {
         requireRolesWhenLoggedIn(token, "ADMIN", "DOCTOR", "PHARMACIST", "PATIENT");
         return aiService.agentChat(request);
+    }
+
+    @PostMapping(value = "/medicine-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public MedicineImageResponse medicineImage(
+        @RequestHeader(value = "X-Auth-Token", required = false) String token,
+        @RequestPart("image") MultipartFile image
+    ) {
+        UserAccount currentUser = authService.requireUser(token);
+        authService.requireAnyRole(currentUser, "ADMIN", "DOCTOR", "PHARMACIST", "PATIENT");
+        return medicineImageService.recognize(currentUser, image);
     }
 
     private void requireRolesWhenLoggedIn(String token, String... roleCodes) {
